@@ -323,8 +323,11 @@ void main(void){
                 while(currKey != '*'){
                     currKey = getKey();
                     difference = playerBet + currKey - ('0'*2);
-                    if(difference == cpuBet - '0')
+                    if(difference == cpuBet - '0'){
+                        setLeds(difference - 0x30);
                         break;
+                    }
+
                 }
             }
 
@@ -542,6 +545,8 @@ void main(void){
             Graphics_drawStringCentered(&g_sContext, "YOU LOST", AUTO_STRING_LENGTH, 48, 90, TRANSPARENT_TEXT);
             Graphics_flushBuffer(&g_sContext);
 
+            humiliation();
+
             while(currKey != '*'){
                 currKey = getKey();
             }
@@ -596,6 +601,9 @@ void main(void){
             Graphics_drawStringCentered(&g_sContext, "YOU WON", AUTO_STRING_LENGTH, 48, 80, TRANSPARENT_TEXT);
             Graphics_drawStringCentered(&g_sContext, "YOU WON", AUTO_STRING_LENGTH, 48, 90, TRANSPARENT_TEXT);
             Graphics_flushBuffer(&g_sContext);
+
+            //proper celebration w/ buzzer and leds
+            celebration();
 
             while(currKey != '*'){
                 currKey = getKey();
@@ -844,17 +852,76 @@ int isOverflow(int value){
 // false if cpu decides to hold
 bool cpuDraw(int value){
     int decision;
-    return false;
 
-    decision = rand() % 2;
-    if (decision > 1){
-        return true;
-    }else{
+    if (value > 17)
         return false;
+    else if (value <= 11)
+        return true;
+    else{
+        decision = rand() % 2;
+        if (decision > 1){
+            return true;
+        }else{
+            return false;
+        }
     }
-
 }
 
+void celebration(void){
+    unsigned int m = 20000;
+    while(1){
+        m--;
+        if (m > 15000){
+            BuzzerOn();
+            setLeds(0x03);
+        }
+        else if ((m > 10000) && (m <= 15000)){
+            Buzzer3On();
+            setLeds(0x0C);
+        }
+        else if ((m > 5000) && (m <= 15000)){
+            Buzzer1On();
+            setLeds(0x06);
+        }
+        else if ((m > 0) && (m <= 5000)){
+            Buzzer2On();
+            setLeds(0x0F);
+        }
+        else if (m == 0){
+            BuzzerOff();
+            setLeds(0);
+            return 0;
+        }
+    }
+}
+
+void humiliation(void){
+    unsigned int m = 20000;
+    while(1){
+        m--;
+        if (m > 15000){
+            Buzzer3On();
+            setLeds(0x01);
+        }
+        else if ((m > 10000) && (m <= 15000)){
+            Buzzer2On();
+            setLeds(0x03);
+        }
+        else if ((m > 5000) && (m <= 15000)){
+            Buzzer1On();
+            setLeds(0x07);
+        }
+        else if ((m > 0) && (m <= 5000)){
+            BuzzerOn();
+            setLeds(0x08);
+        }
+        else if (m == 0){
+            BuzzerOff();
+            setLeds(0);
+            return 0;
+        }
+    }
+}
 
 void swDelay(char numLoops)
 {
