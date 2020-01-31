@@ -297,7 +297,7 @@ void main(void){
             playerBet = currKey;
             dispThree[0] = ' ';
             dispThree[1] = playerBet;
-            dispThree[2] = ' ';
+            dispThree[2] = '\0';
 
             // display players's bet
             Graphics_drawStringCentered(&g_sContext, "Your bet is: ", AUTO_STRING_LENGTH, 45, 60, TRANSPARENT_TEXT);
@@ -311,7 +311,7 @@ void main(void){
             cpuBet = calculateBet(getValue(&cpuHand, cpuHandLen) , playerBet);
             dispThree[0] = ' ';
             dispThree[1] = cpuBet;
-            dispThree[2] = ' ';
+            dispThree[2] = '\0';
             Graphics_drawStringCentered(&g_sContext, "CPU's bet is: ", AUTO_STRING_LENGTH, 50, 75, TRANSPARENT_TEXT);
             Graphics_drawStringCentered(&g_sContext, dispThree, AUTO_STRING_LENGTH, 90, 75, TRANSPARENT_TEXT);
             Graphics_flushBuffer(&g_sContext);
@@ -364,21 +364,22 @@ void main(void){
             // print out player's cards
             playerHandLen = sizeof(playerHand)/sizeof(playerHand[0]);
             for (i = 0; i< playerHandLen;i++){
-                if(playerHand[i] == 0)
+                if(playerHand[i][0] == '\0'){
                     break;
+                }
                 Graphics_drawStringCentered(&g_sContext, playerHand[i], dispSz, 20 + i*25, 20, OPAQUE_TEXT);
             }
             // print out cpu's cards
             cpuHandLen = sizeof(cpuHand)/sizeof(cpuHand[0]);
             Graphics_drawStringCentered(&g_sContext, "CPU", AUTO_STRING_LENGTH, 48, 40, TRANSPARENT_TEXT);
             for (i = 0; i< cpuHandLen;i++){
-                if(cpuHand[i] == 0)
+                if(cpuHand[i][0] == '\0')
                     break;
-                // TODO UNCOMMENTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTtttttttttttttttttttttttttttttttttttttttttttttt
 //                if (i == 1){
 //                    Graphics_drawStringCentered(&g_sContext, "xxx", dispSz, 20 + i*25, 50, OPAQUE_TEXT);
 //                    continue;
 //                }
+                // TODO FIX PRINTING OF 10s ******************************************************************************************************10
                 Graphics_drawStringCentered(&g_sContext, cpuHand[i], dispSz, 20 + i*25, 50, OPAQUE_TEXT);
             }
             Graphics_flushBuffer(&g_sContext);
