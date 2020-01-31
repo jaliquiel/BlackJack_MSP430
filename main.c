@@ -22,13 +22,22 @@
 // Function Prototypes
 void swDelay(char numLoops);
 unsigned char* getCardString(unsigned int card);
-enum GAME_STATE {welcome = 0, cut =1, shuffle=2, bet=3, draw=4};
+enum GAME_STATE {welcome = 0, cut =1, shuffle=2, bet=3, draw=4, cpu=5, loser=6, winner=7, end=8};
+enum HAND_STATE {lost = 0, won =1, keepPlaying=2};
 
 // Declare globals here
 
 
 void main(void){
     // ... code
+
+
+
+    while(1){
+
+
+
+
     unsigned char currKey=0, dispSz = 3;
     unsigned char dispThree[3] = {NULL, NULL, NULL};
     unsigned int deck[52] = {0};
@@ -40,9 +49,17 @@ void main(void){
     unsigned char playerBet;
     unsigned char cpuBet;
 
-    // variables for lenght of players hand
+    // variables for lenght of players hand array
     int playerHandLen;
     int cpuHandLen;
+    // current number of cards at each players hand
+    int playerCards = 0;
+    int cpuCards = 0;
+
+    int endGame;
+    bool restartGame = false;
+
+
 
 
     WDTCTL = WDTPW | WDTHOLD;    // Stop watchdog timer. Always need to stop this!!
@@ -188,21 +205,26 @@ void main(void){
             topDeckIndex++;
             strcpy(playerHand[1], getCardString(deck[topDeckIndex]));
             topDeckIndex++;
-            strcpy(playerHand[2], "\0");
+//            strcpy(playerHand[2], '\0');
+            playerCards += 2;
 
             strcpy(cpuHand[0], getCardString(deck[topDeckIndex]));
             topDeckIndex++;
             strcpy(cpuHand[1], getCardString(deck[topDeckIndex]));
             topDeckIndex++;
-            strcpy(cpuHand[2], "\0");
+//            strcpy(cpuHand[2], '\0');
+            cpuCards += 2;
 
             // PRINT OUT PLAYERS HANDS
             Graphics_drawStringCentered(&g_sContext, "PLAYER 1:", AUTO_STRING_LENGTH, 48, 10, TRANSPARENT_TEXT);
             // print out player's cards
             playerHandLen = sizeof(playerHand)/sizeof(playerHand[0]);
             for (i = 0; i< playerHandLen;i++){
-                if(playerHand[i] == '\0')
+                unsigned char* test = playerHand[i];
+                *(test);
+                if(*(test) == '\0'){
                     break;
+                }
                 Graphics_drawStringCentered(&g_sContext, playerHand[i], dispSz, 20 + i*25, 20, OPAQUE_TEXT);
             }
             // print out cpu's cards
@@ -222,7 +244,7 @@ void main(void){
 
             // get ready to switch state to bet
             state = bet;
-            swDelay(2);
+            swDelay(1);
             setLeds(0);
             break;
 
@@ -251,7 +273,7 @@ void main(void){
             // print out player's cards
             playerHandLen = sizeof(playerHand)/sizeof(playerHand[0]);
             for (i = 0; i< playerHandLen;i++){
-                if(playerHand[i] == '\0')
+                if(playerHand[i] == 0)
                     break;
                 Graphics_drawStringCentered(&g_sContext, playerHand[i], dispSz, 20 + i*25, 20, OPAQUE_TEXT);
             }
@@ -259,7 +281,7 @@ void main(void){
             cpuHandLen = sizeof(cpuHand)/sizeof(cpuHand[0]);
             Graphics_drawStringCentered(&g_sContext, "CPU", AUTO_STRING_LENGTH, 48, 40, TRANSPARENT_TEXT);
             for (i = 0; i< cpuHandLen;i++){
-                if(cpuHand[i] == '\0')
+                if(cpuHand[i] == 0)
                     break;
 
                 // TODO UNCOMMENTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTtttttttttttttttttttttttttttttttttttttttttttttt
@@ -310,6 +332,7 @@ void main(void){
                 state = draw;
                 Graphics_clearDisplay(&g_sContext); // Clear the display
             }
+            swDelay(1);
             break;
 
         case draw: // CPU turn
@@ -320,7 +343,29 @@ void main(void){
             // display hands
             // wait for input either 1 or #
             //      add card
-            // reenter state
+            //      check for overflow
+            //      reenter state
+            //------> #
+            //      cpu adds a card
+            //      overflow()
+            //      decide if pick another one
+            //      finish???
+            //      ----------->
+            //                  compare cards and decide winner
+
+
+            endGame = isOverflow(&playerHand, playerHandLen);
+            if(endGame == lost){
+                state = loser;
+                currKey = NULL;
+                Graphics_clearDisplay(&g_sContext); // Clear the display
+                break;
+            }else if(endGame == won){
+                state = winner;
+                currKey = NULL;
+                Graphics_clearDisplay(&g_sContext); // Clear the display
+                break;
+            }
 
 
             // PRINT OUT PLAYERS HANDS
@@ -328,7 +373,7 @@ void main(void){
             // print out player's cards
             playerHandLen = sizeof(playerHand)/sizeof(playerHand[0]);
             for (i = 0; i< playerHandLen;i++){
-                if(playerHand[i] == '\0')
+                if(playerHand[i] == 0)
                     break;
                 Graphics_drawStringCentered(&g_sContext, playerHand[i], dispSz, 20 + i*25, 20, OPAQUE_TEXT);
             }
@@ -336,9 +381,8 @@ void main(void){
             cpuHandLen = sizeof(cpuHand)/sizeof(cpuHand[0]);
             Graphics_drawStringCentered(&g_sContext, "CPU", AUTO_STRING_LENGTH, 48, 40, TRANSPARENT_TEXT);
             for (i = 0; i< cpuHandLen;i++){
-                if(cpuHand[i] == '\0')
+                if(cpuHand[i] == 0)
                     break;
-
                 // TODO UNCOMMENTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTtttttttttttttttttttttttttttttttttttttttttttttt
 //                if (i == 1){
 //                    Graphics_drawStringCentered(&g_sContext, "xxx", dispSz, 20 + i*25, 50, OPAQUE_TEXT);
@@ -346,23 +390,130 @@ void main(void){
 //                }
                 Graphics_drawStringCentered(&g_sContext, cpuHand[i], dispSz, 20 + i*25, 50, OPAQUE_TEXT);
             }
+            Graphics_flushBuffer(&g_sContext);
 
 
+            // ask player to fold or get a card
+            while(1){
+                currKey = getKey();
+                if((currKey == '#') || (currKey == '1') )
+                    break;
+            }
 
 
+            if (currKey == '1'){
+                // add card to player
+                strcpy(playerHand[playerCards], getCardString(deck[topDeckIndex]));
+                topDeckIndex++;
+                playerCards += 1;
 
+                state = draw;
+                currKey = NULL;
+                Graphics_clearDisplay(&g_sContext); // Clear the display
 
-
-
+                // get out of switch statement
+                break;
+            }
 
 
             break;
-        case 5: // Win or lost state
+
+        case cpu: // Win or lost state
             // display celebration or loss statement
             break;
+
+        case loser: // Lost state
+            // display celebration or loss statement
+            // ...
+
+
+//            // PRINT OUT PLAYERS HANDS
+//            Graphics_drawStringCentered(&g_sContext, "PLAYER 1:", AUTO_STRING_LENGTH, 48, 10, TRANSPARENT_TEXT);
+//            // print out player's cards
+//            playerHandLen = sizeof(playerHand)/sizeof(playerHand[0]);
+//            for (i = 0; i< playerHandLen;i++){
+//                if(playerHand[i] == 0)
+//                    break;
+//                Graphics_drawStringCentered(&g_sContext, playerHand[i], dispSz, 20 + i*25, 20, OPAQUE_TEXT);
+//            }
+//            // print out cpu's cards
+//            cpuHandLen = sizeof(cpuHand)/sizeof(cpuHand[0]);
+//            Graphics_drawStringCentered(&g_sContext, "CPU", AUTO_STRING_LENGTH, 48, 40, TRANSPARENT_TEXT);
+//            for (i = 0; i< cpuHandLen;i++){
+//                if(cpuHand[i] == 0)
+//                    break;
+//                // TODO UNCOMMENTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTtttttttttttttttttttttttttttttttttttttttttttttt
+////                if (i == 1){
+////                    Graphics_drawStringCentered(&g_sContext, "xxx", dispSz, 20 + i*25, 50, OPAQUE_TEXT);
+////                    continue;
+////                }
+//                Graphics_drawStringCentered(&g_sContext, cpuHand[i], dispSz, 20 + i*25, 50, OPAQUE_TEXT);
+//            }
+//            Graphics_flushBuffer(&g_sContext);
+
+            Graphics_drawStringCentered(&g_sContext, "YOU LOST", AUTO_STRING_LENGTH, 48, 10, TRANSPARENT_TEXT);
+            Graphics_drawStringCentered(&g_sContext, "YOU LOST", AUTO_STRING_LENGTH, 48, 20, TRANSPARENT_TEXT);
+            Graphics_drawStringCentered(&g_sContext, "YOU LOST", AUTO_STRING_LENGTH, 48, 30, TRANSPARENT_TEXT);
+            Graphics_drawStringCentered(&g_sContext, "YOU LOST", AUTO_STRING_LENGTH, 48, 40, TRANSPARENT_TEXT);
+            Graphics_drawStringCentered(&g_sContext, "YOU LOST", AUTO_STRING_LENGTH, 48, 50, TRANSPARENT_TEXT);
+            Graphics_drawStringCentered(&g_sContext, "YOU LOST", AUTO_STRING_LENGTH, 48, 60, TRANSPARENT_TEXT);
+            Graphics_drawStringCentered(&g_sContext, "YOU LOST", AUTO_STRING_LENGTH, 48, 70, TRANSPARENT_TEXT);
+            Graphics_drawStringCentered(&g_sContext, "YOU LOST", AUTO_STRING_LENGTH, 48, 80, TRANSPARENT_TEXT);
+            Graphics_drawStringCentered(&g_sContext, "YOU LOST", AUTO_STRING_LENGTH, 48, 90, TRANSPARENT_TEXT);
+            Graphics_flushBuffer(&g_sContext);
+
+            while(currKey != '*'){
+                currKey = getKey();
+            }
+
+            if(currKey == '*'){
+                Graphics_clearDisplay(&g_sContext); // Clear the display
+                state = welcome;
+                currKey = NULL;
+
+                currKey=0;
+//                deck[52] = {0};
+                topDeckIndex = 0; // represents the current index of the top of the deck
+
+                // current number of cards at each players hand
+                playerCards = 0;
+                cpuCards = 0;
+            }
+
+            break;
+
+        case winner: // Win state
+            // display celebration or loss statement
+            Graphics_drawStringCentered(&g_sContext, "YOU WON", AUTO_STRING_LENGTH, 48, 10, TRANSPARENT_TEXT);
+            Graphics_drawStringCentered(&g_sContext, "YOU WON", AUTO_STRING_LENGTH, 48, 20, TRANSPARENT_TEXT);
+            Graphics_drawStringCentered(&g_sContext, "YOU WON", AUTO_STRING_LENGTH, 48, 30, TRANSPARENT_TEXT);
+            Graphics_flushBuffer(&g_sContext);
+
+            while(currKey != '*'){
+                currKey = getKey();
+            }
+
+            if(currKey == '*'){
+//                Graphics_clearDisplay(&g_sContext); // Clear the display
+//                state = welcome;
+//                currKey = NULL;
+//
+//                currKey=0;
+////                deck[52] = {0};
+//                topDeckIndex = 0; // represents the current index of the top of the deck
+//
+//                // current number of cards at each players hand
+//                playerCards = 0;
+//                cpuCards = 0;
+                state = end;
+            }
+
+            break;
         }
+
     }  // end while (1)
 
+    } // end bigger infinite while
 
 }
 
@@ -468,6 +619,27 @@ unsigned char calculateBet(int handValue, unsigned char playerBet){
     return bet;
 }
 
+// given a value check if the hand's value is bigger than 21
+// return lost if hand overflows
+// won if hand == 21
+// keepPlaying if hand is less than 21
+int isOverflow(unsigned char hand[10][3], int lenghtOfHand){
+
+    unsigned char value = getValue(&hand, lenghtOfHand);
+
+    if(value > 21){
+        // end game player lost
+        return lost;
+    }else if (value == 21){
+        // player won
+        return won;
+    }else if (value < 21){
+        // player could keep going
+        return keepPlaying;
+    }
+    // this wont happen
+    return lost;
+}
 
 
 
