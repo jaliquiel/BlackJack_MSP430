@@ -31,13 +31,6 @@ enum HAND_STATE {lost = 0, won =1, keepPlaying=2};
 void main(void){
     // ... code
 
-
-
-    while(1){
-
-
-
-
     unsigned char currKey=0, dispSz = 3;
     unsigned char dispThree[3] = {NULL, NULL, NULL};
     unsigned int deck[52] = {0};
@@ -57,7 +50,6 @@ void main(void){
     int cpuCards = 0;
 
     int endGame;
-    bool restartGame = false;
 
     int cpuHandValue;
     int playerHandValue;
@@ -208,14 +200,12 @@ void main(void){
             topDeckIndex++;
             strcpy(playerHand[1], getCardString(deck[topDeckIndex]));
             topDeckIndex++;
-//            strcpy(playerHand[2], '\0');
             playerCards += 2;
 
             strcpy(cpuHand[0], getCardString(deck[topDeckIndex]));
             topDeckIndex++;
             strcpy(cpuHand[1], getCardString(deck[topDeckIndex]));
             topDeckIndex++;
-//            strcpy(cpuHand[2], '\0');
             cpuCards += 2;
 
             // PRINT OUT PLAYERS HANDS
@@ -250,9 +240,6 @@ void main(void){
             break;
 
         case bet: // Adding cards state
-            // read input from player either 1 or #
-            // got check both hands of players (check for losers)
-            // move to cpu's turn
 
             // Write some text to the display
             Graphics_drawStringCentered(&g_sContext, "Bet:1-2-4-8", AUTO_STRING_LENGTH, 40, 60, TRANSPARENT_TEXT);
@@ -331,10 +318,22 @@ void main(void){
                 }
             }
 
+
             if(currKey == '*'){
-                // TODO send to you loose state ********************************************************************************
-                state = welcome;
+                // RESTART ALL VARIABLES FOR NEW GAME
                 Graphics_clearDisplay(&g_sContext); // Clear the display
+                state = welcome;
+                currKey = NULL;
+                dispThree[0] = NULL;
+                dispThree[1] = NULL;
+                dispThree[2] = NULL;
+                int i;
+                for(i = 0; i < 52; i ++ ){
+                    deck[i] = 0;
+                }
+                topDeckIndex = 0; // represents the current index of the top of the deck
+                playerCards = 0;
+                cpuCards = 0;
             }else{
                 // TODO DOES IT NEED TO DISPLAY THE NEW BET VALUE????? ****************************************
                 playerBet = cpuBet;
@@ -464,20 +463,7 @@ void main(void){
             }
             Graphics_flushBuffer(&g_sContext);
 
-//
-//            // display hands
-//            // wait for input either 1 or #
-//            //      add card
-//            //      check for overflow
-//            //      reenter state
-//            //------> #
-//            //      overflow()
-//            //      decide if pick another one
-//            //      finish???
-//            //      ----------->
-//            //                  compare cards and decide winner
-//
-//
+
 //            // Do CPU Action
 //            // restart state
             if(cpuDraw(cpuHandValue)){
@@ -552,15 +538,18 @@ void main(void){
             }
 
             if(currKey == '*'){
+                // RESTART ALL VARIABLES FOR NEW GAME
                 Graphics_clearDisplay(&g_sContext); // Clear the display
                 state = welcome;
                 currKey = NULL;
-
-                currKey=0;
-//                deck[52] = {0};
+                dispThree[0] = NULL;
+                dispThree[1] = NULL;
+                dispThree[2] = NULL;
+                int i;
+                for(i = 0; i < 52; i ++ ){
+                    deck[i] = 0;
+                }
                 topDeckIndex = 0; // represents the current index of the top of the deck
-
-                // current number of cards at each players hand
                 playerCards = 0;
                 cpuCards = 0;
             }
@@ -610,21 +599,22 @@ void main(void){
             }
 
             if(currKey == '*'){
-//                Graphics_clearDisplay(&g_sContext); // Clear the display
-//                state = welcome;
-//                currKey = NULL;
-//
-//                currKey=0;
-////                deck[52] = {0};
-//                topDeckIndex = 0; // represents the current index of the top of the deck
-//
-//                // current number of cards at each players hand
-//                playerCards = 0;
-//                cpuCards = 0;
+                // RESTART ALL VARIABLES FOR NEW GAME
+                Graphics_clearDisplay(&g_sContext); // Clear the display
+                state = welcome;
+                currKey = NULL;
+                dispThree[0] = NULL;
+                dispThree[1] = NULL;
+                dispThree[2] = NULL;
+                int i;
+                for(i = 0; i < 52; i ++ ){
+                    deck[i] = 0;
+                }
+                topDeckIndex = 0; // represents the current index of the top of the deck
+                playerCards = 0;
+                cpuCards = 0;
             }
-
             break;
-
 
         case end: // cpu and player holded, decide winner
 
@@ -679,26 +669,32 @@ void main(void){
                 Graphics_drawStringCentered(&g_sContext, "DRAW", AUTO_STRING_LENGTH, 48, 90, TRANSPARENT_TEXT);
             }
 
-            // wait for input to restart game
             while(currKey != '*'){
                 currKey = getKey();
             }
+
             if(currKey == '*'){
+                // RESTART ALL VARIABLES FOR NEW GAME
                 Graphics_clearDisplay(&g_sContext); // Clear the display
                 state = welcome;
                 currKey = NULL;
                 dispThree[0] = NULL;
                 dispThree[1] = NULL;
                 dispThree[2] = NULL;
-                break;
+                int i;
+                for(i = 0; i < 52; i ++ ){
+                    deck[i] = 0;
+                }
+                topDeckIndex = 0; // represents the current index of the top of the deck
+                playerCards = 0;
+                cpuCards = 0;
             }
-
+            break;
 
         }
 
     }  // end while (1)
 
-    } // end bigger infinite while
 
 }
 
@@ -803,25 +799,6 @@ unsigned char calculateBet(int handValue, unsigned char playerBet){
 
     return bet;
 }
-
-//int isOverflow(unsigned char hand[10][3], int lenghtOfHand){
-//
-//    unsigned char valueChar = getValue(&hand, lenghtOfHand);
-//    int value = valueChar - '0';
-//
-//    if(value > 21){
-//        // end game player lost
-//        return lost;
-//    }else if (value == 21){
-//        // player won
-//        return won;
-//    }else if (value < 21){
-//        // player could keep going
-//        return keepPlaying;
-//    }
-//    // this wont happen
-//    return lost;
-//}
 
 
 // given a value check if the hand's value is bigger than 21
