@@ -121,11 +121,14 @@ void main(void){
 
                 // if user has put input before, save input into second index
                 if (dispThree[0] == NULL){
+                    if( !((currKey == '0') || (currKey =='1')) )
+                            continue;
                     dispThree[0] = currKey;
                     Graphics_drawStringCentered(&g_sContext, dispThree, dispSz, 48, 65, OPAQUE_TEXT);
                     Graphics_flushBuffer(&g_sContext);
-                    Graphics_flushBuffer(&g_sContext);
                 }else{
+                    if ( (currKey - '0' > 5) && (dispThree[0] == '1') )
+                        continue;
                     dispThree[1] = currKey;
                 }
                 dispThree[2] = ' ';
@@ -509,12 +512,9 @@ void main(void){
 
 // Given an int from 1 to 52, return the corresponding card string representation
 unsigned char* getCardString(unsigned int card){
-
     // card string
     unsigned char* string = malloc(3);
-
     unsigned int reminder = card % 13 + 1;
-
     string[1] = '-';
 
     if (card >= 1 && card <= 13){
@@ -758,16 +758,16 @@ void printHands(unsigned char playerHand[10][3], unsigned char cpuHand[10][3], u
         if(cpuHand[i][0] == '\0'){
             break;
         }
+        if ( (i == 1) && (cpuVisible == false) ){
+            Graphics_drawStringCentered(&g_sContext, "xxx", dispSz, 10 + i*25, 50, OPAQUE_TEXT);
+            continue;
+        }
         else if(cpuHand[i][0] == '1'){
             dispFour[0] = '1';
             dispFour[1] = '0';
             dispFour[2] = cpuHand[i][1]; // add '-'
             dispFour[3] = cpuHand[i][2]; // add suit
             Graphics_drawStringCentered(&g_sContext, dispFour, dispFourSz, 10 + i*25, 20, OPAQUE_TEXT);
-            continue;
-        }
-        if ( (i == 1) && (cpuVisible == false) ){
-            Graphics_drawStringCentered(&g_sContext, "xxx", dispSz, 10 + i*25, 50, OPAQUE_TEXT);
             continue;
         }
         Graphics_drawStringCentered(&g_sContext, cpuHand[i], dispSz, 10 + i*25, 50, OPAQUE_TEXT);
