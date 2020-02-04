@@ -20,19 +20,28 @@
 #include "peripherals.h"
 
 // Function Prototypes
-void swDelay(char numLoops);
 unsigned char* getCardString(unsigned int card);
-enum GAME_STATE {welcome = 0, cut =1, shuffle=2, bet=3, draw=4, cpu=5, loser=6, winner=7, end=8, reset=9};
-enum HAND_STATE {lost = 0, won =1, keepPlaying=2};
+int getValue(unsigned char hand[10][3], int lenghtOfHand);
+unsigned char calculateBet(int handValue, unsigned char playerBet);
+int isOverflow(int value);
+bool cpuDraw(int value);
+void celebration(void);
+void humiliation(void);
+void swDelay(char numLoops);
+void printHands(unsigned char playerHand[][], unsigned char cpuHand[][], unsigned char dispFour[], unsigned char dispSz, unsigned char dispFourSz);
+
 
 // Declare globals here
+enum GAME_STATE {welcome = 0, cut =1, shuffle=2, bet=3, draw=4, cpu=5, loser=6, winner=7, end=8, reset=9};
+enum HAND_STATE {lost = 0, won =1, keepPlaying=2};
 
 
 void main(void){
     // ... code
 
-    unsigned char currKey=0, dispSz = 3;
+    unsigned char currKey=0, dispSz = 3, dispFourSz = 4;
     unsigned char dispThree[3] = {NULL, NULL, NULL};
+    unsigned char dispFour[4] = {NULL, NULL, NULL, NULL};
     unsigned int deck[52] = {0};
     unsigned int topDeckIndex = 0; // represents the current index of the top of the deck
 
@@ -54,34 +63,26 @@ void main(void){
     int cpuHandValue;
     int playerHandValue;
 
-
-
-
-    WDTCTL = WDTPW | WDTHOLD;    // Stop watchdog timer. Always need to stop this!!
-                                     // You can then configure it properly, if desired
-
-        // Useful code starts here
-        initLeds();
-
-        configDisplay();
-        configKeypad();
-
-        // *** Intro Screen ***
-        Graphics_clearDisplay(&g_sContext); // Clear the display
-
-        // Draw a box around everything because it looks nice
-        Graphics_Rectangle box = {.xMin = 5, .xMax = 91, .yMin = 5, .yMax = 91 };
-        Graphics_drawRectangle(&g_sContext, &box);
-        // Refresh the display so it shows the new data
-        Graphics_flushBuffer(&g_sContext);
-
     enum GAME_STATE state = welcome;
 
 
+    WDTCTL = WDTPW | WDTHOLD;    // Stop watchdog timer. Always need to stop this!!
+                                 // You can then configure it properly, if desired
+    // Useful code starts here
+    initLeds();
+    configDisplay();
+    configKeypad();
+
+    // *** Intro Screen ***
+    Graphics_clearDisplay(&g_sContext); // Clear the display
+    // Draw a box around everything because it looks nice
+    Graphics_Rectangle box = {.xMin = 5, .xMax = 91, .yMin = 5, .yMax = 91 };
+    Graphics_drawRectangle(&g_sContext, &box);
+    // Refresh the display so it shows the new data
+    Graphics_flushBuffer(&g_sContext);
+
     while (1)    // Forever loop
     {
-
-//        currKey = getKey();
 
         switch(state){
         case welcome: // Start Screen
@@ -105,7 +106,6 @@ void main(void){
                 dispThree[0] = NULL;
                 dispThree[1] = NULL;
                 dispThree[2] = NULL;
-
             }
             break;
 
@@ -118,7 +118,6 @@ void main(void){
             // Refresh the display so it shows the new data
             Graphics_flushBuffer(&g_sContext);
 
-            // TODO SANITIZE INPUT if number is outside range *****************************************************************************************
             while(currKey != '*'){
                 currKey = getKey();
 
@@ -158,8 +157,8 @@ void main(void){
 
 
         case shuffle: // Wait for input from player
+
             // Set the random seed
-            // TODOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO change true
             if (true){
                 int a = dispThree[0] - '0';
                 int b = dispThree[1] - '0';
@@ -191,7 +190,6 @@ void main(void){
             strcpy(playerHand[1], getCardString(deck[topDeckIndex]));
             topDeckIndex++;
             playerCards += 2;
-
             strcpy(cpuHand[0], getCardString(deck[topDeckIndex]));
             topDeckIndex++;
             strcpy(cpuHand[1], getCardString(deck[topDeckIndex]));
@@ -199,35 +197,37 @@ void main(void){
             cpuCards += 2;
 
             // PRINT OUT PLAYERS HANDS
-            Graphics_drawStringCentered(&g_sContext, "PLAYER 1:", AUTO_STRING_LENGTH, 48, 10, TRANSPARENT_TEXT);
-            // print out player's cards
-            playerHandLen = sizeof(playerHand)/sizeof(playerHand[0]);
-            for (i = 0; i< playerHandLen;i++){
-                if(playerHand[i][0] == '\0'){
-                    break;
-                }
-//                else if(playerHand[i][0] == '1'){
-//                    Graphics_drawStringCentered(&g_sContext, "10", AUTO_STRING_LENGTH, 17 + i*25, 20, OPAQUE_TEXT);
-//                    Graphics_drawStringCentered(&g_sContext, playerHand[i], dispSz, 10 + i*25, 20, OPAQUE_TEXT);
+//            printHands(unsigned char playerHand[][], unsigned char cpuHand[][], unsigned char dispFour[], unsigned char dispSz, unsigned char dispFourSz);
+            printHands(&playerHand, &cpuHand, &dispFour, dispSz, dispFourSz);
+//            Graphics_drawStringCentered(&g_sContext, "PLAYER 1:", AUTO_STRING_LENGTH, 48, 10, TRANSPARENT_TEXT);
+//            // print out player's cards
+//            playerHandLen = sizeof(playerHand)/sizeof(playerHand[0]);
+//            for (i = 0; i< playerHandLen;i++){
+//                if(playerHand[i][0] == '\0'){
+//                    break;
+//                }
+////                else if(playerHand[i][0] == '1'){
+////                    Graphics_drawStringCentered(&g_sContext, "10", AUTO_STRING_LENGTH, 17 + i*25, 20, OPAQUE_TEXT);
+////                    Graphics_drawStringCentered(&g_sContext, playerHand[i], dispSz, 10 + i*25, 20, OPAQUE_TEXT);
+////                    continue;
+////                }
+//                Graphics_drawStringCentered(&g_sContext, playerHand[i], dispSz, 10 + i*25, 20, OPAQUE_TEXT);
+//            }
+//            // print out cpu's cards
+//            cpuHandLen = sizeof(cpuHand)/sizeof(cpuHand[0]);
+//            Graphics_drawStringCentered(&g_sContext, "CPU", AUTO_STRING_LENGTH, 48, 40, TRANSPARENT_TEXT);
+//            for (i = 0; i< cpuHandLen;i++){
+//                if(cpuHand[i][0] == '\0'){
+//                    break;
+//                }
+//                if (i == 1){
+//                    Graphics_drawStringCentered(&g_sContext, "xxx", dispSz, 10 + i*25, 50, OPAQUE_TEXT);
 //                    continue;
 //                }
-                Graphics_drawStringCentered(&g_sContext, playerHand[i], dispSz, 10 + i*25, 20, OPAQUE_TEXT);
-            }
-            // print out cpu's cards
-            cpuHandLen = sizeof(cpuHand)/sizeof(cpuHand[0]);
-            Graphics_drawStringCentered(&g_sContext, "CPU", AUTO_STRING_LENGTH, 48, 40, TRANSPARENT_TEXT);
-            for (i = 0; i< cpuHandLen;i++){
-                if(cpuHand[i][0] == '\0'){
-                    break;
-                }
-                if (i == 1){
-                    Graphics_drawStringCentered(&g_sContext, "xxx", dispSz, 10 + i*25, 50, OPAQUE_TEXT);
-                    continue;
-                }
-                // TODO FIX PRINTING OF 10s ******************************************************************************************************10
-                Graphics_drawStringCentered(&g_sContext, cpuHand[i], dispSz, 10 + i*25, 50, OPAQUE_TEXT);
-            }
-            Graphics_flushBuffer(&g_sContext);
+//                // TODO FIX PRINTING OF 10s ******************************************************************************************************10
+//                Graphics_drawStringCentered(&g_sContext, cpuHand[i], dispSz, 10 + i*25, 50, OPAQUE_TEXT);
+//            }
+//            Graphics_flushBuffer(&g_sContext);
 
             // get ready to switch state to bet
             state = bet;
@@ -260,11 +260,14 @@ void main(void){
                 if(playerHand[i][0] == '\0'){
                     break;
                 }
-//                else if(playerHand[i][0] == '1'){
-//                    Graphics_drawStringCentered(&g_sContext, "10", AUTO_STRING_LENGTH, 17 + i*25, 20, OPAQUE_TEXT);
-//                    Graphics_drawStringCentered(&g_sContext, playerHand[i], dispSz, 10 + i*25, 20, OPAQUE_TEXT);
-//                    continue;
-//                }
+                else if(playerHand[i][0] == '1'){
+                    dispFour[0] = '1';
+                    dispFour[1] = '0';
+                    dispFour[2] = playerHand[i][1]; // add '-'
+                    dispFour[3] = playerHand[i][2]; // add suit
+                    Graphics_drawStringCentered(&g_sContext, dispFour, dispFourSz, 10 + i*25, 20, OPAQUE_TEXT);
+                    continue;
+                }
                 Graphics_drawStringCentered(&g_sContext, playerHand[i], dispSz, 10 + i*25, 20, OPAQUE_TEXT);
             }
             // print out cpu's cards
@@ -274,11 +277,18 @@ void main(void){
                 if(cpuHand[i][0] == '\0'){
                     break;
                 }
+                else if(cpuHand[i][0] == '1'){
+                    dispFour[0] = '1';
+                    dispFour[1] = '0';
+                    dispFour[2] = cpuHand[i][1]; // add '-'
+                    dispFour[3] = cpuHand[i][2]; // add suit
+                    Graphics_drawStringCentered(&g_sContext, dispFour, dispFourSz, 10 + i*25, 20, OPAQUE_TEXT);
+                    continue;
+                }
                 if (i == 1){
                     Graphics_drawStringCentered(&g_sContext, "xxx", dispSz, 10 + i*25, 50, OPAQUE_TEXT);
                     continue;
                 }
-                // TODO FIX PRINTING OF 10s ******************************************************************************************************10
                 Graphics_drawStringCentered(&g_sContext, cpuHand[i], dispSz, 10 + i*25, 50, OPAQUE_TEXT);
             }
 
@@ -680,6 +690,10 @@ void main(void){
             dispThree[0] = NULL;
             dispThree[1] = NULL;
             dispThree[2] = NULL;
+            dispFour[0] = NULL;
+            dispFour[1] = NULL;
+            dispFour[2] = NULL;
+            dispFour[3] = NULL;
             for(i = 0; i < 52; i ++ ){
                 deck[i] = 0;
             }
@@ -696,13 +710,12 @@ void main(void){
             state = welcome;
             break;
         } // end switch statement
-
     }  // end while
 
 
 }
 
-
+// Given an int from 1 to 52, return the corresponding card string representation
 unsigned char* getCardString(unsigned int card){
 
     // card string
@@ -810,10 +823,6 @@ unsigned char calculateBet(int handValue, unsigned char playerBet){
 // won if hand == 21
 // keepPlaying if hand is less than 21
 int isOverflow(int value){
-
-//    unsigned char valueChar = getValue(&hand, lenghtOfHand);
-//    int value = valueChar - '0';
-
     if(value > 21){
         // end game player lost
         return lost;
@@ -833,7 +842,6 @@ int isOverflow(int value){
 // false if cpu decides to hold
 bool cpuDraw(int value){
     int decision;
-
     if (value > 17)
         return false;
     else if (value <= 11)
@@ -848,6 +856,7 @@ bool cpuDraw(int value){
     }
 }
 
+// Play celebration sound with buzzer and turn on LEDs for a set amount of time
 void celebration(void){
     unsigned int m = 20000;
     while(1){
@@ -876,6 +885,7 @@ void celebration(void){
     }
 }
 
+// Play humiliation sound with buzzer and turn on LEDs for a set amount of time
 void humiliation(void){
     unsigned int m = 20000;
     while(1){
@@ -923,6 +933,56 @@ void swDelay(char numLoops)
         while (i > 0)               // could also have used while (i)
            i--;
     }
+}
+
+
+// prints to the board, both the player and opponent hands
+void printHands(unsigned char playerHand[10][3], unsigned char cpuHand[10][3], unsigned char dispFour[4], unsigned char dispSz, unsigned char dispFourSz){
+
+    // PRINT OUT PLAYERS HANDS
+    Graphics_drawStringCentered(&g_sContext, "PLAYER 1:", AUTO_STRING_LENGTH, 48, 10, TRANSPARENT_TEXT);
+    // print out player's cards
+
+//    int playerHandLen = sizeof(playerHand)/sizeof(playerHand[0]);
+    int playerHandLen = 10;
+    int i = 0;
+    for (i = 0; i< playerHandLen;i++){
+        if(playerHand[i][0] == '\0'){
+            break;
+        }
+        else if(playerHand[i][0] == '1'){
+            dispFour[0] = '1';
+            dispFour[1] = '0';
+            dispFour[2] = playerHand[i][1]; // add '-'
+            dispFour[3] = playerHand[i][2]; // add suit
+            Graphics_drawStringCentered(&g_sContext, dispFour, dispFourSz, 10 + i*25, 20, OPAQUE_TEXT);
+            continue;
+        }
+        Graphics_drawStringCentered(&g_sContext, playerHand[i], dispSz, 10 + i*25, 20, OPAQUE_TEXT);
+    }
+    // print out cpu's cards
+//    int cpuHandLen = sizeof(cpuHand)/sizeof(cpuHand[0]);
+    int cpuHandLen = 10;
+    Graphics_drawStringCentered(&g_sContext, "CPU", AUTO_STRING_LENGTH, 48, 40, TRANSPARENT_TEXT);
+    for (i = 0; i< cpuHandLen;i++){
+        if(cpuHand[i][0] == '\0'){
+            break;
+        }
+        else if(cpuHand[i][0] == '1'){
+            dispFour[0] = '1';
+            dispFour[1] = '0';
+            dispFour[2] = cpuHand[i][1]; // add '-'
+            dispFour[3] = cpuHand[i][2]; // add suit
+            Graphics_drawStringCentered(&g_sContext, dispFour, dispFourSz, 10 + i*25, 20, OPAQUE_TEXT);
+            continue;
+        }
+        if (i == 1){
+            Graphics_drawStringCentered(&g_sContext, "xxx", dispSz, 10 + i*25, 50, OPAQUE_TEXT);
+            continue;
+        }
+        Graphics_drawStringCentered(&g_sContext, cpuHand[i], dispSz, 10 + i*25, 50, OPAQUE_TEXT);
+    }
+
 }
 
 
